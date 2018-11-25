@@ -2,13 +2,13 @@ import socket
 import selectors
 import types
 import asyncio
+import functools
 
 host = socket.gethostname()
 port = 34555
 sel = selectors.DefaultSelector()
 target_addr = (host, port)
 target_name = 'server'
-
 
 def handle_connection(key, mask):
     client_socket = key.fileobj
@@ -48,17 +48,18 @@ def update_target(message, default):
     return default
 
 
-async def get_input(key):
+def get_input(key):
     while True:
-        await asyncio.sleep(0.001)
+        #await asyncio.sleep(0.01)
         client_socket = key.fileobj
         data = key.data
-        prompt = data.prompt
+        # prompt = data.prompt
         try:
-            message = input(prompt + ":")
+            # message = input("To " + prompt + ": ")
+            message = input()
             if len(message) > 0:
                 client_socket.send(message.encode())
-                data.prompt = update_target(message, prompt)
+                #data.prompt = update_target(message, prompt)
             if message == "LOGOUT":
                 # finish the connection
                 client_socket.shutdown(socket.SHUT_WR)
@@ -102,10 +103,12 @@ def user_connect():
 def main():
     loop = asyncio.get_event_loop()
     sel_key = user_connect()
-
     try:
-        asyncio.ensure_future(get_input(sel_key))
+        # get_input(sel_key)
+        asyncio.sleep(0.01)
         asyncio.ensure_future(read_from_server())
+        # asyncio.ensure_future(get_input(sel_key))
+        loop.run_in_executor(None, functools.partial(get_input,sel_key))
         loop.run_forever()
     except:
         print("disconnected from server")
@@ -114,4 +117,4 @@ def main():
         exit(0)
 
 
-main()
+asyncio.ensure_future(main())
