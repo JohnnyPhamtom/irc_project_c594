@@ -40,23 +40,29 @@ def handle_connection(key, mask):
             client_socket.close()
 
 
+def update_target(message, default):
+    string_tokens = message.split()
+    if len(string_tokens) > 1:
+        if (string_tokens[0] == '/w') | (string_tokens[0] == '/g'):
+            return string_tokens[1]
+    return default
+
 
 async def get_input(key):
     while True:
         await asyncio.sleep(0.001)
         client_socket = key.fileobj
-        #data = key.data
-        prompt = target_name + ':'
+        data = key.data
+        prompt = data.prompt
         try:
-            message = input(prompt)
-            if message == "exit":
+            message = input(prompt + ":")
+            if len(message) > 0:
+                client_socket.send(message.encode())
+                data.prompt = update_target(message, prompt)
+            if message == "LOGOUT":
                 # finish the connection
                 client_socket.shutdown(socket.SHUT_WR)
                 break
-                #client_socket.close()
-            else:
-                #data.outb = message
-                client_socket.send(message.encode())
         except IOError:
             print("GET_INPUT failed")
 
@@ -87,7 +93,7 @@ def user_connect():
         print("server not found..")
         exit(-1)
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
-    data = types.SimpleNamespace(addr=server_addr, inb=b'', outb=b'')
+    data = types.SimpleNamespace(addr=server_addr, prompt=target_name, inb=b'', outb=b'')
     sel_key = sel.register(client_socket, events, data=data)
     # kb_event_sel.register(sys.stdin, selectors.EVENT_READ, get_input(sel_key))
     return sel_key

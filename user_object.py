@@ -50,6 +50,7 @@ class User:
     # PART shows group membership
     def display_group(self):
         print(self.groupList)
+        return self.groupList
 
     # check for group membership
     def member_of(self, group):
