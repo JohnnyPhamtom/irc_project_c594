@@ -29,6 +29,12 @@ class ParseInput:
         if len(tokens) < 3:
             print("not enough args")
             return self.default_name
+        s = ''.join(tokens[1])
+        s2 = ''.join(tokens[2])
+        if (len(s) > 9) | (not s.isalnum()) | (len(s2) > 20):
+            print("invalid username")
+            return self.default_name
+
         for i, v in enumerate(self.userList):
             if v[0] == tokens[1]:
                 print("User name taken.. try again")
@@ -104,7 +110,10 @@ class ParseInput:
             group_to_add = []
             added_group = []
             for n in range(0, max):
-                if "#" in tokens[n]:
+                s = ''.join(tokens[n])
+                s = s.lstrip('#')
+                # print("join in ",s)
+                if (tokens[n].startswith('#')) & (s.isalnum()) & (len(s) < 10):
                     #print(tokens[n])
                     group_to_add.append(tokens[n])
                     print("JOIN groups to add: ", group_to_add)
@@ -141,7 +150,11 @@ class ParseInput:
                 if v[0] == client_name:
                     check_object = self.userObjectList[i]
                     for j in range (0, len(tokens)):
-                        if "#" in tokens[j]:
+                        s = ''.join(tokens[j])
+                        s = s.lstrip('#')
+                        # print("join in ",s)
+                        if (tokens[j].startswith('#')) & (s.isalnum()) & (len(s) < 10):
+                        # if tokens[j].startswith('#'):
                             check_object.leave(tokens[j])
                             left_group.append(tokens[j])
                             print("successfully left", tokens[j])
@@ -172,6 +185,7 @@ class ParseInput:
                     if v[0] == client_name:
                         check_object = self.userObjectList[i]
                         return check_object.display_group()
+            return []
         except:
             print("PART error.")
             return []

@@ -3,12 +3,13 @@ import selectors
 import types
 import asyncio
 import functools
-
+import sys
 host = socket.gethostname()
 port = 34555
 sel = selectors.DefaultSelector()
 target_addr = (host, port)
 target_name = 'server'
+
 
 def handle_connection(key, mask):
     client_socket = key.fileobj
@@ -17,7 +18,9 @@ def handle_connection(key, mask):
         try:
             recv_data = client_socket.recv(4096)
             if recv_data:
-                print(recv_data.decode())
+                # refresh_prompt(data.prompt)
+                print("\r" + recv_data.decode())
+                # refresh_prompt(data.prompt)
             else:
                 print('closing connection to', data.addr)
                 sel.unregister(client_socket)
@@ -48,9 +51,13 @@ def update_target(message, default):
     return default
 
 
+#def refresh_prompt(prompt):
+#        sys.stdout.write("\r%s :" % prompt)
+#        # sys.stdout.flush()
+
 def get_input(key):
     while True:
-        #await asyncio.sleep(0.01)
+        # await asyncio.sleep(0.01)
         client_socket = key.fileobj
         data = key.data
         # prompt = data.prompt
@@ -59,13 +66,14 @@ def get_input(key):
             message = input()
             if len(message) > 0:
                 client_socket.send(message.encode())
-                #data.prompt = update_target(message, prompt)
+                # data.prompt = update_target(message, prompt)
             if message == "LOGOUT":
                 # finish the connection
                 client_socket.shutdown(socket.SHUT_WR)
                 break
         except IOError:
             print("GET_INPUT failed")
+
 
 async def read_from_server():
     # print("established read")
@@ -81,6 +89,7 @@ async def read_from_server():
                 break
         except IOError:
             print("read_from_server: lost connection")
+            break
 
 
 def user_connect():
@@ -103,13 +112,14 @@ def user_connect():
 def main():
     loop = asyncio.get_event_loop()
     sel_key = user_connect()
+    data = sel_key.data
     try:
         # get_input(sel_key)
         asyncio.sleep(0.01)
         asyncio.ensure_future(read_from_server())
         # asyncio.ensure_future(get_input(sel_key))
         loop.run_in_executor(None, functools.partial(get_input,sel_key))
-        loop.run_forever()
+        loop.run_until_complete(read_from_server())
     except:
         print("disconnected from server")
     finally:
@@ -117,4 +127,4 @@ def main():
         exit(0)
 
 
-asyncio.ensure_future(main())
+main()
